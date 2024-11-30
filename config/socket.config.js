@@ -1,7 +1,7 @@
-import { Server } from 'socket.io'
-import io from 'socket.io-client'
+const { Server } = require('socket.io');
+const io = require('socket.io-client');
 
-import KnxController from'../app/controllers/Api/KnxController.js';
+const KnxController = require('../app/controllers/Api/KnxController.js');
 
 const SocketIo = {}
 
@@ -9,7 +9,7 @@ const SocketIo = {}
  * * Initial Socket connection
  * @param {*} server 
  */
-SocketIo.connection = (server) => {
+exports.connection = (server) => {
     const io = new Server('', {
         cors: {origin: "*"}
     }).listen(server);
@@ -26,21 +26,21 @@ SocketIo.connection = (server) => {
  * @param {*} name 
  * @param {*} args 
  */
-SocketIo.event = (name, args) => {
+exports.socketEvent = (name, args) => {
     SocketIo.io.emit(name, args);
 }
 
 /**
- * * Socket Connection with OCG backend
+ * * Socket Connection with backend system
  */
-SocketIo.OCGsocket = () => {
-    const ocg_socket = io(`${process.env.PROTOCOL}${process.env.SOCKET_OCG}`);
+exports.socketCommunicationChannel = () => {
+    const cc_socket = io(`${process.env.PROTOCOL}${process.env.SOCKET_BACK}`);
 
-    ocg_socket.on('connect', () => {
-        console.log(`Connected to: ${process.env.SOCKET_OCG}'`);
-        console.log(`Socket ID: ${ocg_socket.id}`);
+    cc_socket.on('connect', () => {
+        console.log(`Connected to: ${process.env.SOCKET_BACK}'`);
+        console.log(`Socket ID: ${cc_socket.id}`);
         
-        ocg_socket.on(`${process.env.SOCKET_OCG}_facilities`, (obj)=>{
+        cc_socket.on(`${process.env.SOCKET_BACK}_facilities`, (obj)=>{
            if (JSON.parse(obj).action == 'knx_change') {
                 console.log('Restarting KNX hook connection...')
                 KnxController.startBroadcast();
@@ -48,5 +48,3 @@ SocketIo.OCGsocket = () => {
         });
     })
 }
-
-export default SocketIo;
