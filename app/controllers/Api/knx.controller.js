@@ -215,8 +215,6 @@ exports.multiStatusByIpRouter = (request, response, next) => {
 exports.startBroadcast = async () => {
     try {
         const params = new URLSearchParams();
-        params.append('pass', 'nF8_hT#!bRw7_Ak6');
-        params.append('corporateid', 0);
         
         let res = await axios.post(`${process.env.PROTOCOL}${process.env.DOMAIN}knx/router/list`, params,{
             headers: {
