@@ -1,6 +1,6 @@
-# KNX Node Server
+# KNX - NodeJS Application Middleware
 
-A knx middleware node server for send command in knx protocol!
+A NodeJS middleware application capable of talking multicast (routing) and unicast (tunneling) to a KNX system through a REST API.
 
 ## Installation
 
