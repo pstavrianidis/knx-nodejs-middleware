@@ -9,10 +9,10 @@ A knx middleware node server for send command in knx protocol!
 2. Optionally, edit the configuration.
 
     ```shell
-    cp config-example.json config.json
-    <edit config.json>
+    cp example.env .env
+    <edit .env>
     ```
-    If `config.json` is absent, default values will be used.
+    If `.env` is absent, default values will be used.
 
 3. Install npm modules and run the program.
 
@@ -25,7 +25,7 @@ A knx middleware node server for send command in knx protocol!
 
 ```Javascript
 Post request:
-endpoint: "/middleware-knx-command",
-parameters: "device", "value" // '0/0/1' , 0/1
+endpoint: "/middleware-knx-switch",
+parameters: "ip", "device", "value" // '172.0.0.1' '0/0/1' , 0/1
 
 ```
