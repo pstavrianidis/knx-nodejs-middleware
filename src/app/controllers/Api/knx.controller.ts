@@ -1,241 +1,241 @@
-import { Datapoint } from 'knx';
-import { connection as _connection } from '../../../config/knx.config.js';
-import axios from 'axios';
-import Validator from 'validatorjs';
+import { Request, Response, NextFunction } from "express";
+import { Datapoint } from "knx";
+import KnX from "../../../config/knx.config.js";
+import axios from "axios";
+import Validator from "validatorjs";
 
+class KnxController {
+  private connections: Array<any> = [];
+  private knx: any;
 
-let connections: Array<any> = [];
+  constructor() {
+    this.knx = KnX;
+  }
 
-/**
- * * Send Command On/Off To KNX Device
- * @param {string} ip //? Router Ip
- * @param {string} device //? Device address
- * @param {number} value //? Switch Value (0-off, 1-on)
- * @param {string} status //? Status address (optional)
- */
-export function knxSwitchRequest(request: any, response: any, next: any) {
-    let value = request.body.value;
-    let connection = connections.find(con => con.address == request.body.ip);
+  /**
+   * * Send Command On/Off To KNX Device
+   * @param req
+   * @param res
+   * @param next
+   */
+  knxSwitchRequest(req: Request, res: Response, next: NextFunction) {
+    let value = req.body.value;
+    let connection = this.connections.find((con) => con.address == req.body.ip);
 
     //* Validation Rules
     let rules = {
-		ip: 'required',
-		device: 'required',
-        value: 'required|boolean'
-	}
+      ip: "required",
+      device: "required",
+      value: "required|boolean",
+    };
 
     //* Set Validation
-	let validation = new Validator(request.body, rules);
+    let validation = new Validator(req.body, rules);
 
     //* If Validation fails
-	if (validation.fails()) {
-		const error: any = new Error('Validation failed.');
-		error.statusCode = 422;
-		error.data = validation.errors.all();
-		throw error;
-	}
+    if (validation.fails()) {
+      const error: any = new Error("Validation failed.");
+      error.statusCode = 422;
+      error.data = validation.errors.all();
+      throw error;
+    }
 
     try {
-        let dp = new Datapoint({ga: request.body.device, dpt: 'DPT1' }, connection.boardcast); //? Send connection with router
-        dp.write(value); //? Send value
-        
+      let dp = new Datapoint({ ga: req.body.device, dpt: "DPT1" }, connection.boardcast); //? Send connection with router
+      dp.write(value); //? Send value
+
+      //* Get Status
+      if (!!req.body.status) {
+        let dpstatus = new Datapoint({ ga: req.body.status, dpt: "DPT1" }, connection.boardcast);
+        dpstatus.read((src, value) => {
+          res.status(200).json({ src: src, value: value });
+        });
+      } else {
+        res.status(200).json({ send: "ok" });
+      }
+    } catch (error: any) {
+      if (!error.statusCode) {
+        error.statusCode = 500;
+      }
+      next(error);
+    }
+  }
+
+  /**
+   * * Send Command Dimming To KNX Device
+   * @param req 
+   * @param res 
+   * @param next 
+   */
+  knxDimmingRequest(req: Request, res: Response, next: NextFunction) {
+    let connection = this.connections.find((con) => con.address == req.body.ip);
+
+    //* Validation Rules
+    let rules = {
+      ip: "required",
+      device: "required",
+      dpt: "required",
+      dimming: "required",
+    };
+
+    //* Set Validation
+    let validation = new Validator(req.body, rules);
+
+    //* If Validation fails
+    if (validation.fails()) {
+      const error: any = new Error("Validation failed.");
+      error.statusCode = 422;
+      error.data = validation.errors.all();
+      throw error;
+    }
+
+    try {
+        let dp = new Datapoint({ ga: req.body.device, dpt: req.body.dpt },connection.boardcast); //? Send connection with router
+        dp.write(req.body.dimming); //? Send value
+    
         //* Get Status
-        if (!!request.body.status) {
-            let dpstatus = new Datapoint({ga: request.body.status, dpt: 'DPT1'}, connection.boardcast);
+        if (!!req.body.status) {
+          let dpstatus = new Datapoint({ ga: req.body.status, dpt: req.body.dpt }, connection.boardcast);
+          setTimeout(() => {
             dpstatus.read((src, value) => {
-                response.status(200).json({src: src, value: value });
-            })
+                res.status(200).json({ src: src, value: value });
+            });
+          }, 1100);
         } else {
-            response.status(200).json({send: 'ok'});
+            res.status(200).json({ send: "ok" });
         }
-        
-        
-    } catch (error: any) {
+      } catch (error: any) {
         if (!error.statusCode) {
-            error.statusCode = 500;
+          error.statusCode = 500;
         }
         next(error);
-    }
-   
-}
+      }
+  }
 
-/**
- * * Send Command Dimming To KNX Device
- * @param {string} ip //? Router Ip
- * @param {string} device //? Device address
- * @param {object|number} dimming //? DPT3 {decr_incr, data} | DPT5 [0 … 100]% | DPT1 0/1
- * @param {string} dpt //? type of device
- * @param {string} status //? Status address (optional)
- */
-export function knxDimmingRequest(request: any, response: any, next: any) {
-    let connection = connections.find(con => con.address == request.body.ip);
+  /**
+   * * Get Status of a device
+   * @param req 
+   * @param res 
+   * @param next 
+   */
+  getStatus(req: Request, res: Response, next: NextFunction) {
+    let connection = this.connections.find((con) => con.address == req.body.ip);
 
     //* Validation Rules
     let rules = {
-		ip: 'required',
-		device: 'required',
-        dpt: 'required',
-        dimming: 'required'
-	}
+        ip: "required", //? Router Ip
+        status: "required", //? Status address
+        dpt: "required", //? Device dpt type
+    };
 
     //* Set Validation
-	let validation = new Validator(request.body, rules);
+    let validation = new Validator(req.body, rules);
 
-    //* If Validation fails
-	if (validation.fails()) {
-		const error: any = new Error('Validation failed.');
-		error.statusCode = 422;
-		error.data = validation.errors.all();
-		throw error;
-	}
-    
-    try {
-        let dp = new Datapoint({ga: request.body.device, dpt: request.body.dpt }, connection.boardcast); //? Send connection with router
-        dp.write(request.body.dimming); //? Send value
-
-        //* Get Status
-        if (!!request.body.status) {
-            let dpstatus = new Datapoint({ga: request.body.status, dpt: request.body.dpt}, connection.boardcast);
-            setTimeout(() => {
-                dpstatus.read((src, value) => {
-                    response.status(200).json({src: src, value: value });
-                })
-            }, 1100)
-
-           
-        } else {
-            response.status(200).json({send: 'ok'});
-        }
-        
-
-    } catch (error: any) {
-        if (!error.statusCode) {
-            error.statusCode = 500;
-        }
-        next(error);
+    //* Set Validation
+    if (validation.fails()) {
+        const error: any = new Error("Validation failed.");
+        error.statusCode = 422;
+        error.data = validation.errors.all();
+        throw error;
     }
-}
-
-/**
- * * Get Status of a device
- * @param {string} ip //? Router Ip
- * @param {string} status //? Status address
- * @param {string} dpt //? Device dpt type
- */
-export function getStatus(request: any, response: any, next: any) {
-    let connection = connections.find(con => con.address == request.body.ip);
-
-    //* Validation Rules
-    let rules = {
-		ip: 'required',
-		status: 'required',
-        dpt: 'required'
-	}
-
-    //* Set Validation
-	let validation = new Validator(request.body, rules);
-
-    //* Set Validation
-	if (validation.fails()) {
-		const error: any = new Error('Validation failed.');
-		error.statusCode = 422;
-		error.data = validation.errors.all();
-		throw error;
-	}
 
     try {
-        let dp = new Datapoint({ga: request.body.status, dpt: request.body.dpt}, connection.boardcast);
+        let dp = new Datapoint({ ga: req.body.status, dpt: req.body.dpt }, connection.boardcast);
         dp.read((src, value) => {
-            console.log("KNX response: %j, value: %j", src, value);
-            response.status(200).json({src: src, value: value});
-        })
-    } catch (error: any) {
+          console.log("KNX response: %j, value: %j", src, value);
+          res.status(200).json({ src: src, value: value });
+        });
+      } catch (error: any) {
         if (!error.statusCode) {
-            error.statusCode = 500;
+          error.statusCode = 500;
         }
         next(error);
-    }
-}
+      }
+  }
 
-/**
- * * Get Status of all Devices per IP Router
- * @param {string} ip //? Router Ip
- * @param {array} devices //? Array of Devices
- */
-export function multiStatusByIpRouter(request: any, response: any, next: any) {
-    let connection = connections.find(con => con.address == request.body.ip);
-    let devices = request.body.devices;
+  /**
+   * * Get Status of all Devices per IP Router
+   * @param req 
+   * @param res 
+   * @param next 
+   */
+  multiStatusByIpRouter(req: Request, res: Response, next: NextFunction) {
+    let connection = this.connections.find((con) => con.address == req.body.ip);
+    let devices = req.body.devices;
 
-    
     //* Validation Rules
     let rules = {
-		ip: 'required',
-		devices: 'required'
-	}
+        ip: "required",
+        devices: "required",
+    };
 
     //* Set Validation
-	let validation = new Validator(request.body, rules);
+    let validation = new Validator(req.body, rules);
 
     //* Set Validation
-	if (validation.fails()) {
-		const error: any = new Error('Validation failed.');
-		error.statusCode = 422;
-		error.data = validation.errors.all();
-		throw error;
-	}
+    if (validation.fails()) {
+        const error: any = new Error("Validation failed.");
+        error.statusCode = 422;
+        error.data = validation.errors.all();
+        throw error;
+    }
 
     try {
         let updatedResponse: Array<any> = [];
-        devices.forEach( (obj: any) => {
-            let dp = new Datapoint({ga: obj.status, dpt: obj.dpt}, connection.boardcast);
-            dp.read((src, value) => {
-                //console.log("KNX response: %j, value: %j", src, value);
-                let resObj = {src: src, value: value};
-                updatedResponse.push(resObj)
-            })
-            
+        devices.forEach((obj: any) => {
+          let dp = new Datapoint({ ga: obj.status, dpt: obj.dpt }, connection.boardcast);
+          dp.read((src, value) => {
+            //console.log("KNX response: %j, value: %j", src, value);
+            let resObj = { src: src, value: value };
+            updatedResponse.push(resObj);
+          });
         });
-        
+    
         setTimeout(() => {
-            response.status(200).json(updatedResponse);
-        }, 1000)
-       
-       
-    } catch (error: any) {
+            res.status(200).json(updatedResponse);
+        }, 1000);
+
+      } catch (error: any) {
         if (!error.statusCode) {
-            error.statusCode = 500;
+          error.statusCode = 500;
         }
         next(error);
-    }
-}
+      }
+  }
 
-/**
- * * Start Broadcasting Event for IP Routers
- */
-export async function startBroadcast() {
+  /**
+   * * Start Broadcasting Event for IP Routers
+   */
+  async startBroadcast() {
     try {
         const params = new URLSearchParams();
-        
-        let res = await axios.post(`${process.env.PROTOCOL}${process.env.DOMAIN}knx/router/list`, params,{
+    
+        let res = await axios.post(`${process.env.PROTOCOL}${process.env.DOMAIN}knx/router/list`, params,
+          {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }, 
-        });
-        let routers = res.data.routers;
-        routers.map( async (con: any) => {
-            try {
-                let hook = {
-                    "address": con.address,
-                    "port": con.port,
-                    "boardcast": await _connection(con.address, con.port),
-                }
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+          }
+        );
 
-                connections.push(hook);
-            } catch (error) {
-                throw error;
-            }
-        })
-    } catch (error) {
+        let routers = res.data.routers;
+        routers.map(async (con: any) => {
+          try {
+            let hook = {
+              address: con.address,
+              port: con.port,
+              boardcast: this.knx.connection(con.address, con.port),
+            };
+    
+            this.connections.push(hook);
+          } catch (error) {
+            throw error;
+          }
+        });
+      } catch (error) {
         throw error;
-    }
+      }
+  }
 }
+
+export default KnxController;

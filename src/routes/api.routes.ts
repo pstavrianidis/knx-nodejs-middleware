@@ -1,13 +1,22 @@
 import { Router } from "express";
-import { getStatus, knxDimmingRequest, knxSwitchRequest, multiStatusByIpRouter } from "../app/controllers/Api/knx.controller.js";
+import KnxController from "../app/controllers/Api/knx.controller.js"
 
-const router = Router();
+class Route {
+    private readonly knxController!: KnxController;
+    public readonly router!: Router;
 
-//* KNX commands
-router.post('/middleware-knx-switch', knxSwitchRequest);
-router.post('/middleware-knx-dimming', knxDimmingRequest);
-router.post('/middleware-knx-status', getStatus);
-router.post('/middleware-knx-multi-status', multiStatusByIpRouter);
+    constructor() {
+        this.knxController = new KnxController();
+        this.router = Router();
+        this.initRoutes();
+    }
 
+    private initRoutes() {
+        this.router.post("/middleware-knx-switch", this.knxController.knxSwitchRequest.bind(this.knxController));
+        this.router.post("/middleware-knx-dimming", this.knxController.knxDimmingRequest.bind(this.knxController));
+        this.router.post("/middleware-knx-status", this.knxController.getStatus.bind(this.knxController));
+        this.router.post("/middleware-knx-multi-status", this.knxController.multiStatusByIpRouter.bind(this.knxController));
+    }
+}
 
-export default router;
+export default new Route().router;
