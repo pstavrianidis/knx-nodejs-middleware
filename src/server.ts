@@ -33,7 +33,7 @@ try {
 	let port = (process.env.LISTEN_PORT || 1234);
 	let server = app.listen(port, () => {
 		console.log(`Successfully initialized local application on port: ${port}`);
-		knx.connection()
+		knx.connection("172.0.0.1", 3671);
 	});
 } catch (error) {
 	throw `An error occurred while trying to initialize the local application: ${error}`;

@@ -1,5 +1,5 @@
 import { Application } from 'express';
-import routes from '../routes/api.js';
+import routes from '../routes/api.routes.js';
 
 /**
  * * Initial Routes

@@ -1,17 +1,15 @@
-// @ts-nocheck
 import { Connection } from "knx";
-// const SocketIo = require('./socket.config');
 
-export async function connection(address, port) {
+export async function connection(address: string, port: number) {
   try {
-    return Connection({
-      ipAddr: ('127.0.0.1'),
-      ipPort: (3671),
+    return new Connection({
+      ipAddr: (address),
+      ipPort: (port),
       minimumDelay: 50,
       debug: true,
       handlers: {
         connected: () => {
-          console.info('**** Starting Broadcasting *****')
+          console.info('**** Starting Broadcasting *****');
           console.info(`${new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')} - [info] KNX: successfully connected ${address}:${port}`);
         },
         event: (evt, src, dest, value) => {
@@ -23,7 +21,7 @@ export async function connection(address, port) {
           let objString = JSON.stringify(new Buffer(value));
           let objhex = JSON.parse(objString).data[0];
 
-          SocketIo.event('knxevents', { event: evt, destination: dest, hex: objhex }); //? Send knx event to client
+          //todo Socket handle
         },
         error: (connstatus) => {
           console.log("**** ERROR: %j", connstatus);
