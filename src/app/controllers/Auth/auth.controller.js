@@ -1,3 +1,4 @@
+// @ts-nocheck
 const Validator = require('validatorjs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');

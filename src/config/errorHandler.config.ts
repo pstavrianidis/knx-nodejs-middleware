@@ -1,8 +1,10 @@
+import { Application } from "express";
+
 /**
  * * Error request handling
  */
- module.exports = (app) => {
-    app.use((error, req, res, next) => {
+ export default (app: Application) => {
+    app.use((error:any, req:any, res:any, next:any) => {
 		console.log(error);
 		const status = error.statusCode || 500;
 		const message = error.message;

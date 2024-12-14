@@ -1,9 +1,10 @@
-const knx = require("knx");
+// @ts-nocheck
+import { Connection } from "knx";
 // const SocketIo = require('./socket.config');
 
-exports.connection = async (address, port) => {
+export async function connection(address, port) {
   try {
-    return knx.Connection({
+    return Connection({
       ipAddr: ('127.0.0.1'),
       ipPort: (3671),
       minimumDelay: 50,

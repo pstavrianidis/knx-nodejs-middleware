@@ -1,3 +1,4 @@
+// @ts-nocheck
 const knx = require('knx');
 const KNX = require('../../../config/knx.config.js');
 const axios = require('axios');

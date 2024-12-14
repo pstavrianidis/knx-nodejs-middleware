@@ -1,8 +1,13 @@
-const express = require('express');
-const dotenv = require('dotenv').config();
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
-const knx = require('./config/knx.config');
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+
+import configHeaders from "./config/headers.config.js";
+import configRoutes from "./config/routes.config.js";
+import configErrorHandler from "./config/errorHandler.config.js";
+
+import * as knx from './config/knx.config.js';
+
 const app = express();
 
 app.use(express.json()); // application/json
@@ -13,20 +18,14 @@ app.use(cors());
 //* application/json
 app.use(express.json());
 
-//* Set template engine
-require('./config/engine.config')(app)
-
-//* Static Files Initial
-require('./config/static.config')(app, express);
-
 //* Set headers
-require('./config/headers.config')(app);
+configHeaders(app);
 
 //* Get routes from core section
-require('./config/routes.config')(app);
+configRoutes(app);
 
 //* Handler for generic errors
-require('./config/errorHandler.config')(app);
+configErrorHandler(app);
 
 
 //* Connect to db, listen Appliction
