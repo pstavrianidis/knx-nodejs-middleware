@@ -1,6 +1,6 @@
 {
   "name": "knx_node_server",
-  "version": "0.1.2",
+  "version": "1.0.1",
   "description": "A node server middleware for knx application",
   "main": "server.js",
   "type": "module",
